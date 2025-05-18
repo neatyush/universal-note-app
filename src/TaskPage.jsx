@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { use, useEffect, useState } from "react";
 import MainLayout from "./MainLayout";
 import { useForm } from "react-hook-form";
 import { v4 as uuidV4 } from "uuid";
@@ -23,20 +23,41 @@ const TaskPage = () => {
   const onSubmit = (data) => {
     if (data.taskname.trim()) {
       const newTask = { taskid: uuidV4(), taskItem: data.taskname };
-      setTask([...task, newTask]);
-
+      const allTasks = [...task, newTask]
+      setTask(allTasks);
+      window.localStorage.setItem("localtask",JSON.stringify(allTasks))
       reset(); // Clear form
       closeModal();
     }
   };
+  // here after tasks are set to a variable, we update the taask state, with a variable which has all previous task added with our newtask input from user,
+  // thus no data gets lefts behind
+  // then after updating the state, we persists it to local storge with set items , and as rule local storage store in key value pair
+  // 
 
-  // delete logic
+ 
+  useEffect(()=>{
+   let exisitingTask =  JSON.parse(localStorage.getItem("localtask",task));
+    if(exisitingTask){
+      setTask(exisitingTask)
+    }
+  },[])
+  // this run on first mount or load, this gets data from localstorage and updates the hook of our task
+  // the empty array represents on mount, this can also be set to dependency 
 
 const deleteNote = (idToDelete) => {
-  const updatedTasks = task.filter((taskItem) => taskItem.taskid !== idToDelete);
+  const locallyStoredTask  = JSON.parse(localStorage.getItem("localtask",task)) || []
+  const updatedTasks = locallyStoredTask.filter((taskItem) => taskItem.taskid !== idToDelete);
   setTask(updatedTasks);
+  localStorage.setItem("localtask",JSON.stringify(updatedTasks));
 };
-
+// retrive data from local storage 
+// if while retreiving from local storage fails the out put then is null and filtering on null causes erros
+// so if (in local storage get itme) or || this must be an empty array[]
+// the received data is used for deletion, by filtering out if selected id is true, filters if selected id is not ture 
+// or equal to the selected id an compare it to ids in task
+// now once state is updated
+// again store in local storage, conver it to json string and set to local
 
   return (
     <MainLayout title="Task">
@@ -48,11 +69,13 @@ const deleteNote = (idToDelete) => {
               className="flex flex-row p-4 rounded-md bg-[#f7f4f2] shadow-md justify-between"
             >
               <p className="p-2 rounded-2xl">{task.taskItem}</p>
+             
               <button
               onClick={() => deleteNote(task.taskid)}
             >
               <img src="/delete-icon.svg" alt="note is empty" className="h-7" />
             </button> 
+            
             </div>
             
         

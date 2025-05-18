@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import MainLayout from "./MainLayout";
 import { v4 as uuidV4 } from "uuid";
 import { useForm } from "react-hook-form";
+import { jsxs } from "react/jsx-runtime";
 
 const NotePage = () => {
   // use form hook
@@ -12,29 +13,37 @@ const NotePage = () => {
     reset,
   } = useForm();
 
-  const defaultNote = {
-    id: "",
-    title: "",
-    body: "",
-  };
-
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notes, setNotes] = useState([]);
   const closeModal = () => setIsModalOpen(false);
 
   const onSubmit = (data) => {
     const newNote = { id: uuidV4(), title: data.notes, body: data.noteBody };
-    setNotes([...notes, newNote]);
+    const newNotes = [...notes, newNote]
+    setNotes(newNotes);
+    localStorage.setItem("localnotes", JSON.stringify(newNotes))
     reset(); // clear form
     closeModal();
   };
 
+// localstorage>retrive>filter>set state>save 
+// 
+// 
+
+  useEffect(() => {
+    const storedNotes = JSON.parse(localStorage.getItem("localnotes"));
+    if (storedNotes) {
+      setNotes(storedNotes);
+    } 
+  }, []);
+
   const deleteNote = (id) => {
-    const newNotes = notes.filter((note) => note.id !== id);
+    const notesOnDisk = JSON.parse(localStorage.getItem("localnotes")) || []
+    const newNotes = notesOnDisk.filter((note) => note.id !== id);
     setNotes(newNotes);
+    localStorage.setItem("localnotes",JSON.stringify(newNotes));
   };
 
-  // delete the current id and generate new notes index
   return (
     <>
       <MainLayout title="Notes">
@@ -60,7 +69,7 @@ const NotePage = () => {
               />
 
               <button
-                className="flex items-center justify-center w-full"
+                className="flex items-center justify-center"
                 onClick={() => deleteNote(note.id)}
               >
                 <img
@@ -90,7 +99,7 @@ const NotePage = () => {
             >
               <input
                 className="font-bold h-10 shadow-xl rounded-xl p-4 w-xl"
-                  type="text"
+                type="text"
                 placeholder="Note heading goes here"
                 {...register("notes", {
                   required: "Ops! You need to input note title",
