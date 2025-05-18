@@ -1,57 +1,45 @@
 import { useEffect, useState } from "react";
 import MainLayout from "./MainLayout";
 import { v4 as uuidV4 } from "uuid";
-import Form from "./Form";
+import { useForm } from "react-hook-form";
 
 const NotePage = () => {
+  // use form hook
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+    reset,
+  } = useForm();
 
   const defaultNote = {
-    "id": "",
-    "title": "",
-    "body": "",
-  }
-
-  const [note, setNote] = useState(defaultNote)
+    id: "",
+    title: "",
+    body: "",
+  };
 
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [notes, setNotes] = useState([]);
-
   const closeModal = () => setIsModalOpen(false);
 
-  const saveNote = () => {
-    if (note.title !== "" && note.body !== "") {
-      const newNote = { id: uuidV4(), title: note.title, body: note.body };
-      
-      setNotes([...notes, newNote]);
-      setNote(defaultNote)
-    } else {
-      alert("Donot leave a field empty");
-    }
+  const onSubmit = (data) => {
+    const newNote = { id: uuidV4(), title: data.notes, body: data.noteBody };
+    setNotes([...notes, newNote]);
+    reset(); // clear form
     closeModal();
   };
 
-  useEffect(()=>{
-    localStorage.setItem("notes",JSON.stringify(notes))
-  },[notes])
-
-  useEffect(()=>{
-    const storedNotes = localStorage.getItem("notes");
-    if(storedNotes){
-      setNotes(JSON.parse(storedNotes));
-    }
-  },[])
-
   const deleteNote = (id) => {
-    const newNotes = notes.filter((note) => note.id !== id)
-    setNotes(newNotes)
-  }
+    const newNotes = notes.filter((note) => note.id !== id);
+    setNotes(newNotes);
+  };
 
   // delete the current id and generate new notes index
   return (
     <>
-      <MainLayout>
+      <MainLayout title="Notes">
         {/* cards */}
-        <div className="bg-[#ffffff] p-4 grid grid-cols-2 justify-around gap-4 relative">
+        <div className="bg-[#ffffff] p-4 grid grid-cols-2 justify-around gap-4 relative ">
           {notes.map((note) => (
             <div
               key={note.id}
@@ -70,13 +58,24 @@ const NotePage = () => {
                 type="text"
                 readOnly
               />
-              <button onClick={() => deleteNote(note.id)}>Delete</button>
+
+              <button
+                className="flex items-center justify-center w-full"
+                onClick={() => deleteNote(note.id)}
+              >
+                <img
+                  src="/delete-icon.svg"
+                  alt="note is empty"
+                  className="h-7"
+                />
+              </button>
             </div>
           ))}
           <button
-            className="bg-[#fe6847] shadow-2xl flex justify-center items-center rounded-full absolute p-4 right-4 bottom-4 hover:bg-[#fe1111]"
-            onClick={()=>{
-              setIsModalOpen(true)
+            className="bg-[#fe6847] shadow-2xl flex justify-center items-center rounded-full absolute p-4 right-2 top-18
+             hover:bg-[#fe1111]"
+            onClick={() => {
+              setIsModalOpen(true);
             }}
           >
             <img src="\add-icon-white.svg" alt="" />
@@ -85,50 +84,60 @@ const NotePage = () => {
 
         {isModalOpen && (
           <div className="fixed inset-0 bg-amber-950/40 flex items-center justify-center">
-            <div className="bg-[#f5f2f2] p-4 flex flex-col gap-4 fixed rounded-2xl">
+            <form
+              onSubmit={handleSubmit(onSubmit)}
+              className="bg-[#f5f2f2] p-4 flex flex-col gap-4 fixed rounded-2xl"
+            >
               <input
-                onChange={(e) => setNote({ ...note, title: e.target.value })}
-                value={note.title}
                 className="font-bold h-10 shadow-xl rounded-xl p-4 w-xl"
-                type="text"
-                name="notes"
+                  type="text"
                 placeholder="Note heading goes here"
+                {...register("notes", {
+                  required: "Ops! You need to input note title",
+                  maxLength: { value: 20, message: "Yes! There is a limit" },
+                })}
               />
+              {errors.notes && (
+                <p className="text-red-500">{errors.notes.message}</p>
+              )}
+
               <textarea
-                onChange={(e) => setNote({ ...note, body: e.target.value })}
-                value={note.body}
                 className="text h-20 shadow-xl rounded-xl p-4 w-xl"
-                type="text"
-                name="notes"
                 placeholder="Notes Appear here"
+                {...register("noteBody", {
+                  required: "Note Body appears to be empty",
+                })}
               />
-              <button
-                className="bg-gray-300 p-2 rounded hover:bg-gray-400"
-                onClick={()=>{
-                  setIsModalOpen(false)
-                }}
-              >
-                Cancel
-              </button>
-              <button
-                className="bg-[#57b9ffad] p-2 hover:bg-[#57b8ff]"
-                type="button"
-                onClick={saveNote}
-              >
-                Save Note
-              </button>
-            </div>
+              {errors.noteBody && (
+                <p className="text-red-500">{errors.noteBody.message}</p>
+              )}
+
+              <div className="flex gap-2 justify-end">
+                <button
+                  className="bg-gray-300 p-2 rounded hover:bg-gray-400"
+                  type="button"
+                  onClick={closeModal}
+                >
+                  Cancel
+                </button>
+                <button
+                  className="bg-[#57b9ffad] p-2 hover:bg-[#57b8ff]"
+                  type="submit"
+                >
+                  Save Note
+                </button>
+              </div>
+            </form>
           </div>
         )}
 
         {notes.length === 0 && (
-          <div className="flex flex-col justify-center items-center  bg-white p-4">
+          <div className="flex flex-col justify-center items-center bg-white p-4">
             <img src="/empty-note.svg" alt="note is empty" className="h-12" />
-            <p>Add Notes</p>
+            <p>No notes to show</p>
           </div>
         )}
       </MainLayout>
-      <Form></Form>
     </>
   );
 };

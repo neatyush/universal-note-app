@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom";
-import NotePage from "./NotePage";
 
-const MainLayout = (props) => {
+
+const MainLayout = ({title,children}) => {
   return (
     <>
       <p className="text-[#ffffff] pt-6 ml-6 text-1xl font-bold">
@@ -9,8 +9,8 @@ const MainLayout = (props) => {
       </p>
       <div className="min-w-5/6 bg-[#57b8ff] p-6 m-6 rounded-2xl h-4/5">
         <div className="flex-col justify-around">
-          <h1 className="text-3xl text-center">Notes</h1>
-          {props.children}
+          <h1 className="text-3xl text-center">{title}</h1>
+          {children}
 
           <div className="flex flex-row justify-between text-2xl border-t-1">
             <Link
